@@ -15,12 +15,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4.2.2
-        
-      - name: Set up Java 11
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '11'
           
       - name: Zip application code
         run: |
@@ -31,7 +25,7 @@ jobs:
         uses: veracode/veracode-uploadandscan-action@0.2.7
         with:
           appname: 'Company_Management_App'
-          createprofile: false
+          createprofile: true
           filepath: 'Company_Management_app.zip'
           version: '${{ github.sha }}'
           vid: ${{ secrets.VERACODE_API_ID }}
