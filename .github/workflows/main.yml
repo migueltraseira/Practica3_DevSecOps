@@ -15,7 +15,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4.2.2
-
+        
+      - name: Set up Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+          
       - name: Zip application code
         run: |
           # Empaqueta toda la app en un ZIP
