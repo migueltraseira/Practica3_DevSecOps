@@ -38,25 +38,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Setup Python 3.12
         uses: actions/setup-python@v4
         with:
-          python-version: 3.12
+          python-version: '3.12'
 
       - name: Install dependencies
+        shell: bash
         run: |
           python -m venv .venv
-          source .venv/bin/activate
+          # activa el venv usando POSIX source
+          . .venv/bin/activate
           pip install --upgrade pip
           pip install -r Company_Management_app/requirements.txt
           pip install pytest
 
       - name: Run tests
-          shell: bash -l {0}
-          run: |
-          source .venv/bin/activate
+        shell: bash
+        run: |
+          # activa el venv antes de lanzar pytest
+          . .venv/bin/activate
           pytest -q
 
   deploy:
