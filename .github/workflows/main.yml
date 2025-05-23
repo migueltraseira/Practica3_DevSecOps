@@ -1,60 +1,44 @@
+# .github/workflows/main.yml
 name: CI DevSecOps Pipeline
 
 on:
   push:
-    branches:
-      - '**'         # corre en cualquier rama
+    branches: ['**']     # en cualquier rama
   pull_request:
-    branches:
-      - main        # y en PRs contra main
+    branches: [ main ]   # en PRs contra main
 
 jobs:
   veracode-scan:
+    name: 🔒 Veracode Upload & Scan
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4.2.2
 
-      - name: Install Veracode CLI
+      - name: Zip application code
         run: |
-          curl -s https://packagecloud.io/install/repositories/veracode/veracode-cli/script.deb.sh | sudo bash
-          sudo apt-get update
-          sudo apt-get install -y veracode-cli
+          # Empaqueta toda la app en un ZIP
+          zip -r Company_Management_app.zip Company_Management_app
 
-      - name: Configure Veracode credentials
-        run: |
-          veracode configure set \
-            --vid ${{ secrets.VERACODE_API_ID }} \
-            --vkey ${{ secrets.VERACODE_API_KEY }}
-
-      - name: Run SAST scan
-        run: |
-          veracode static scan . \
-            --fail-on-severity HIGH \
-            --format json \
-            --output sast-report.json
-
-      - name: Run SCA scan
-        run: |
-          veracode sca scan . \
-            --fail-on-severity HIGH \
-            --format json \
-            --output sca-report.json
-
-      - name: Upload Veracode reports
-        uses: actions/upload-artifact@v4.6.2
+      - name: Veracode Upload And Scan
+        uses: veracode/veracode-uploadandscan-action@0.2.7
         with:
-          name: veracode-reports
-          path: |
-            sast-report.json
-            sca-report.json
+          appname: 'Company_Management_App'
+          createprofile: false
+          filepath: 'Company_Management_app.zip'
+          version: '${{ github.sha }}'
+          vid: ${{ secrets.VERACODE_API_ID }}
+          vkey: ${{ secrets.VERACODE_API_KEY }}
+          # fail-on-severity HIGH es el comportamiento por defecto
 
   test-and-lint:
+    name: ✅ Test & Lint
     needs: veracode-scan
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: Setup Python 3.12
         uses: actions/setup-python@v4
@@ -74,15 +58,17 @@ jobs:
           pytest -q
 
   deploy:
-    if: github.ref == 'refs/heads/main' && success()
+    name: 🚀 Deploy to Render
     needs: test-and-lint
+    if: github.ref == 'refs/heads/main' && needs.veracode-scan.result == 'success'
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: Deploy to Render
         run: |
           curl -X POST https://api.render.com/deploy/srv-<TU-SRV-ID> \
             -H "Accept: application/json" \
             -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}"
+
