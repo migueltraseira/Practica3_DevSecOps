@@ -1,0 +1,86 @@
+name: Veracode SAST & SCA Pipeline
+
+on:
+  push:
+    branches: [ '**' ]            # ejecuta en pushes a cualquier rama
+  pull_request:
+    branches: [ main ]           # y en PRs hacia main
+
+jobs:
+  veracode-scan:
+    name: Ejecutar escaneo Veracode
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Instalar Veracode CLI
+        run: |
+          curl -s https://packagecloud.io/install/repositories/veracode/veracode-cli/script.deb.sh | sudo bash
+          sudo apt-get update && sudo apt-get install -y veracode-cli
+
+      - name: Configurar credenciales Veracode
+        run: |
+          veracode configure set \
+            --vid ${{ secrets.VERACODE_API_ID }} \
+            --vkey ${{ secrets.VERACODE_API_KEY }}
+
+      - name: SAST Scan (análisis estático)
+        run: |
+          veracode static scan . \
+            --fail-on-severity HIGH \
+            --format json \
+            --output sast-report.json
+
+      - name: SCA Scan (análisis de dependencias)
+        run: |
+          veracode sca scan . \
+            --fail-on-severity HIGH \
+            --format json \
+            --output sca-report.json
+
+      - name: Publicar artefactos de reporte
+        uses: actions/upload-artifact@v3
+        with:
+          name: veracode-reports
+          path: |
+            sast-report.json
+            sca-report.json
+
+  test-and-lint:
+    name: Test & Lint
+    needs: veracode-scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+
+      - name: Instalar dependencias
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install --upgrade pip
+          pip install -r Company_Management_app/requirements.txt
+
+      - name: Ejecutar tests
+        run: |
+          source .venv/bin/activate
+          pytest -q
+
+  # (Opcional) despliegue solo cuando main esté limpio
+  deploy:
+    name: Desplegar en Render
+    needs: test-and-lint
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Deploy a Render
+        run: |
+          curl -X POST https://api.render.com/deploy/srv-<TUI-RENDER-SRV-ID> \
+            -H "Accept: application/json" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}"
