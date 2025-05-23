@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: flaskstack-app
+    env: python
+    plan: free
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn server:app
+    autoDeploy: true
+    healthCheckPath: /Company_Management_app
+    envVars:
+      - key: FLASK_ENV
+        value: production
