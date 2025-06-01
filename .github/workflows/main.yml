@@ -65,7 +65,7 @@ jobs:
   deploy:
     name: 🚀 Deploy to Render
     needs: test-and-lint
-    if: github.ref == 'refs/heads/main' && needs.veracode-scan.result == 'success'
+    if: needs.veracode-scan.result == 'success'
     runs-on: ubuntu-latest
 
     steps:
