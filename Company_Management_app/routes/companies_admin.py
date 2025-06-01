@@ -19,7 +19,9 @@ def admin_add_company():
         company_name = request.form['company_name']
         owner = request.form['owner']
         conn = get_data_connection()
-        conn.execute("INSERT INTO companies (name, owner) VALUES ('"+ company_name+"', '"+owner+"')")
+        cursor=conn.cursor()
+        cursor.execute("INSERT INTO companies (name, owner) VALUES (?, ?)", (company_name, owner))
+        #conn.execute("INSERT INTO companies (name, owner) VALUES ('"+ company_name+"', '"+owner+"')")
         conn.commit()
         conn.close()
         return redirect('/admin/companies')
@@ -31,8 +33,8 @@ def delete_company():
         return "Access denied", 403
     company = request.form['company']
     conn = get_data_connection()
-    conn.execute("DELETE FROM companies WHERE id = "+ company)
-    conn.execute("DELETE FROM comments WHERE company_id = " + company)
+    conn.execute("DELETE FROM companies WHERE id = ?", (company,))
+    conn.execute("DELETE FROM comments WHERE company_id = ?", (company,))
     conn.commit()
     conn.close()
     return redirect('/admin/companies')

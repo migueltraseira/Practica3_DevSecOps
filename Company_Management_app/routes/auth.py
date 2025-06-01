@@ -10,10 +10,12 @@ def login():
         username = request.form['username']
         password = request.form['password']
         conn = get_users_connection()
-        user = conn.execute("SELECT * FROM users WHERE username = '"+ username +"' AND password = '"+hash_password(password)+"'").fetchone()
+        cursor=conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE username = ?",(username,))
+        user=cursor.fetchone()
         conn.close()
         
-        if user:
+        if user and hash_password(password, user['password']):
             session['username'] = user['username']
             session['role'] = user['role']
             session['company_id'] = user['company_id']  # Guarda el company_id en la sesión

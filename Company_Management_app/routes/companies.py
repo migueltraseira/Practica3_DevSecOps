@@ -23,19 +23,24 @@ def list_companies():
     conn.close()
     return render_template('companies/home.html', companies=companies_list)
 
-
-
 @app.route('/companies/<int:company_id>', methods=['GET', 'POST'])
 def company_detail(company_id):
     if 'username' not in session:
         return redirect('/login')
     conn = get_data_connection()
-    company = conn.execute("SELECT * FROM companies WHERE id = " + str(company_id)).fetchone()
-    comments = conn.execute("SELECT * FROM comments WHERE company_id = " + str(company_id)).fetchall()
+    cursor=conn.cursor()
+    cursor.execute("SELECT * FROM companies WHERE id = ?", (str(company_id),))
+    company=cursor.fetchone()
+    #company = conn.execute("SELECT * FROM companies WHERE id = " + str(company_id)).fetchone()
+    cursor.execute("SELECT * FROM comments WHERE company_id = ?", (str(company_id),))
+    comments=cursor.fetchall()
+    #comments = conn.execute("SELECT * FROM comments WHERE company_id = " + str(company_id)).fetchall()
+
     if request.method == 'POST':
         comment = request.form['comment']
         user = session.get('username')
-        conn.execute("INSERT INTO comments (company_id, user, comment) VALUES ("+str(company_id)+", '"+user+"', '"+comment+"')")
+        cursor.execute("INSERT INTO comments (company_id, user, comment) VALUES (?, ?, ?)", (str(company_id), user, comment))
+        #conn.execute("INSERT INTO comments (company_id, user, comment) VALUES ("+str(company_id)+", '"+user+"', '"+comment+"')")
         conn.commit()
         conn.close()
         return redirect('/companies/'+str(company_id))
@@ -53,7 +58,9 @@ def register_company():
         description = request.form['description']
         owner = session.get('username')
         conn = get_data_connection()
-        conn.execute("INSERT INTO companies (name, description, owner) VALUES ("+company_name+", '"+description+"', '"+owner+"')")
+        cursor=conn.cursor()
+        cursor.execute("INSERT INTO companies (name, description, owner) VALUES (?, ?, ?)", (company_name, description, owner))
+        #conn.execute("INSERT INTO companies (name, description, owner) VALUES ("+company_name+", '"+description+"', '"+owner+"')")
         conn.commit()
         conn.close()
         return redirect('/companies')
@@ -65,7 +72,10 @@ def edit_company(company_id):
     if 'username' not in session:
         return redirect('/')
     conn = get_data_connection()
-    company = conn.execute("SELECT * FROM companies WHERE id = "+ str(company_id)).fetchone()
+    cursor=conn.cursor()
+    cursor.execute("SELECT * FROM companies WHERE id = ?", (str(company_id),))
+    company = cursor.fetchone()
+    #company = conn.execute("SELECT * FROM companies WHERE id = "+ str(company_id)).fetchone()
     if not company:
         conn.close()
         return "Company not found", 404
@@ -75,11 +85,11 @@ def edit_company(company_id):
     if request.method == 'POST':
         new_name = request.form['company_name']
         new_description = request.form['description']
-        conn.execute("UPDATE companies SET name = '"+new_name+"', description = '"+new_description+"' WHERE id = "+str(company_id))
+        cursor.execute("UPDATE companies SET name = ?, description = ? WHERE id = ?", (new_name, new_description, str(company_id)))
+        #conn.execute("UPDATE companies SET name = '"+new_name+"', description = '"+new_description+"' WHERE id = "+str(company_id))
         conn.commit()
         conn.close()
         return redirect('/companies')
     conn.close()
     return render_template('companies/edit_company.html', company=company)
-
 
