@@ -14,9 +14,22 @@ def login():
         conn.close()
         
         if user:
-            session['username'] = user['username']
-            session['role'] = user['role']
-            session['company_id'] = user['company_id']  # Guarda el company_id en la sesión
+            app.config.update(
+                SESSION_COOKIE_HTTPONLY=True, # Impide acceso desde JavaScript
+                SESSION_COOKIE_SECURE=True, # Solo envía la cookie por HTTPS
+                SESSION_COOKIE_SAMESITE='Lax' # Protege contra CSRF "cross-site request forgery"
+            )
+            app.config.update(
+                SESSION_COOKIE_HTTPONLY=True, # Impide acceso desde JavaScript
+                SESSION_COOKIE_SECURE=True, # Solo envía la cookie por HTTPS
+                SESSION_COOKIE_SAMESITE='Lax' # Protege contra CSRF "cross-site"
+            )
+            app.config.update(
+                SESSION_COOKIE_HTTPONLY=True, # Impide acceso desde JavaScript
+                SESSION_COOKIE_SECURE=True, # Solo envía la cookie por HTTPS
+                SESSION_COOKIE_SAMESITE='Lax' # Protege contra CSRF "cross-site"
+            )
+
             return redirect('/companies')
         else:
             return render_template('auth/login.html', error="Invalid username or password")
