@@ -1,4 +1,4 @@
-from flask import request, redirect, render_template, session
+from flask import request, redirect, render_template, session, flash, url_for
 from server import app
 from db import get_users_connection, get_data_connection, hash_password
 
@@ -25,13 +25,30 @@ def add_user():
     username = request.form['username']
     password = request.form['password']
     role = request.form['role']
+    if not username or not password or not role:
+        flash("Todos los campos son obligatorios")
+        return redirect(url_for('add_user'))
+    if not username.isalnum():
+        flash("Nombre de usuario inválido")
+        return redirect(url_for('add_user'))
+    if not role.isdigit():
+        flash("Rol inválido")
+        return redirect(url_for('add_user'))
     company_id = request.form.get('company_id') if role == 'owner' else None
 
     conn = get_users_connection()
     if company_id:
-        conn.execute("INSERT INTO users (username, password, role, company_id) VALUES ('"+username+"', '"+hash_password(password)+"', "+role+", "+company_id+")")
+        #conn.execute("INSERT INTO users (username, password, role, company_id) VALUES ('"+username+"', '"+hash_password(password)+"', "+role+", "+company_id+")")
+        conn.execute(
+            "INSERT INTO users (username, password, role, company_id) VALUES (?, ?, ?, ?)", 
+            (username, hash_password(password), role, company_id)
+        )
     else:
-        conn.execute("INSERT INTO users (username, password, role) VALUES ('"+username+"', '"+hash_password(password)+"', "+role+")")
+        #conn.execute("INSERT INTO users (username, password, role) VALUES ('"+username+"', '"+hash_password(password)+"', "+role+")")
+        conn.execute(
+            "INSERT INTO users (username, password, role) VALUES (?, ?, ?)", 
+            (username, hash_password(password), role)
+        )
     conn.commit()
     conn.close()
     return redirect('/admin/users')

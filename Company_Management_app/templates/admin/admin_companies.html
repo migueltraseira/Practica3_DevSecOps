@@ -3,6 +3,14 @@
 {% block content %}
 
 <h2>Add Company (Admin)</h2>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="alert alert-warning">{{ msg }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
 <form method="post" action="/admin/companies/add" class="row g-3 mt-2 mb-4">
     <div class="mb-3">
         <label class="form-label">Company Name</label>
@@ -20,6 +28,7 @@
 </form>
 
 <h2>All Companies</h2>
+
 <table class="table table-striped mt-3">
     <thead>
         <tr><th>Name</th><th>Owner</th><th>Delete</th></tr>
