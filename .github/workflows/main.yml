@@ -65,7 +65,7 @@ jobs:
   deploy:
     name: 🚀 Deploy to Render
     needs: test-and-lint
-    if: github.ref == 'refs/heads/main' && needs.veracode-scan.result == 'success'
+    if: needs.veracode-scan.result == 'success'
     runs-on: ubuntu-latest
 
     steps:
@@ -73,7 +73,7 @@ jobs:
 
       - name: Deploy to Render
         run: |
-          curl -X POST https://api.render.com/deploy/srv-<TU-SRV-ID> \
+          curl -X POST https://api.render.com/deploy/https://api.render.com/deploy/srv-d0u9oq63jp1c73fmmpgg?key=jWvt2ghU7cU
             -H "Accept: application/json" \
-            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}"
+            -H "Authorization: Bearer rnd_28shfTqYiMlRGO23CRMHQDaQth00
 
